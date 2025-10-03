@@ -1,103 +1,140 @@
-import Image from "next/image";
+'use client';
+
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  collection,
+  getDocs,
+  collectionGroup,
+  query,
+  where,
+} from 'firebase/firestore';
+import { db } from '../lib/firebase'; // relative path from src/app → src/lib
+
+type ApplicationStatus = 'Exploring' | 'Shortlisting' | 'Applying' | 'Submitted';
+type Student = {
+  id: string;
+  name?: string;
+  email?: string;
+  country?: string;
+  grade?: string | number;
+  status?: ApplicationStatus;
+  lastActive?: string;
+};
+
+type CommDoc = {
+  // commLog docs; we’ll only need timestamp
+  timestamp?: any;
+};
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  useEffect(() => {
+    (async () => {
+      // Load students
+      const sSnap = await getDocs(collection(db, 'students'));
+      const sRows = sSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Student[];
+      setStudents(sRows);
+      setLoading(false);
+    })();
+  }, []);
+
+  // Counts per status
+  const stats = useMemo(() => {
+    const by = { total: students.length, Exploring: 0, Shortlisting: 0, Applying: 0, Submitted: 0 } as
+      { total: number } & Record<ApplicationStatus, number>;
+    for (const s of students) {
+      if (s.status && by[s.status] !== undefined) by[s.status]++;
+    }
+    return by;
+  }, [students]);
+
+  // Not contacted in 7 days (uses collectionGroup on students/{id}/commLog)
+  const [notContacted, setNotContacted] = useState<string[]>([]);
+  useEffect(() => {
+    (async () => {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      // Find studentIds that DO have comms within 7 days
+      const cg = query(
+        collectionGroup(db, 'commLog'),
+        where('timestamp', '>=', sevenDaysAgo)
+      );
+      const cgSnap = await getDocs(cg);
+      const recentlyContacted = new Set<string>();
+      cgSnap.forEach((docSnap) => {
+        const studentId = docSnap.ref.parent.parent?.id; // parent of commLog subcol
+        if (studentId) recentlyContacted.add(studentId);
+      });
+      // Everyone else = not contacted
+      const ids = students
+        .map((s) => s.id)
+        .filter((id) => !recentlyContacted.has(id));
+      setNotContacted(ids);
+    })();
+  }, [students]);
+
+  // Simple “high intent” & “needs essay help” placeholders:
+  // You can drive these by fields on the student doc if you have them,
+  // or leave them empty if not in your data.
+  const highIntent: Student[] = [];        // plug in your real logic when available
+  const needsEssayHelp: Student[] = [];    // plug in your real logic when available
+
+  const byId = new Map(students.map((s) => [s.id, s]));
+  const listNotContacted = notContacted
+    .map((id) => byId.get(id))
+    .filter(Boolean) as Student[];
+
+  return (
+    <div style={{ padding: 20 }}>
+      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>Dashboard</h1>
+
+      {/* Summary stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 12, marginBottom: 16 }}>
+        {[
+          ['Total', stats.total],
+          ['Exploring', stats.Exploring],
+          ['Shortlisting', stats.Shortlisting],
+          ['Applying', stats.Applying],
+          ['Submitted', stats.Submitted],
+        ].map(([label, value]) => (
+          <div key={label as string} style={{ background: '#0B1220', border: '1px solid #1f2937', borderRadius: 12, padding: 16 }}>
+            <div style={{ fontSize: 24, fontWeight: 700 }}>{value as number}</div>
+            <div style={{ color: '#9CA3AF' }}>{label as string}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Quick filters */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 12 }}>
+        <QuickList
+          title={`Not contacted in 7 days (${listNotContacted.length})`}
+          list={listNotContacted}
+        />
+        <QuickList title={`High intent (${highIntent.length})`} list={highIntent} />
+        <QuickList title={`Needs essay help (${needsEssayHelp.length})`} list={needsEssayHelp} />
+      </div>
+
+      {loading && <div style={{ marginTop: 12 }}>Loading…</div>}
+    </div>
+  );
+}
+
+function QuickList({ title, list }: { title: string; list: Student[] }) {
+  return (
+    <div style={{ background: '#0B1220', border: '1px solid #1f2937', borderRadius: 12, padding: 16 }}>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>{title}</div>
+      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        {list.slice(0, 8).map((s) => (
+          <li key={s.id} style={{ marginBottom: 6 }}>
+            <Link href={`/students/${s.id}`} style={{ color: '#60a5fa' }}>
+              {s.name || s.email || s.id}
+            </Link>
+          </li>
+        ))}
+        {list.length === 0 && <li style={{ color: '#9CA3AF' }}>None</li>}
+      </ul>
     </div>
   );
 }
