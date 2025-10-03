@@ -31,7 +31,7 @@ It allows the internal team to:
 ### 1. Clone the repository  
 ```bash
 git clone https://github.com/needmoregrind/Internal-CRM-dashboard.git
-cd MVP-internal-CRM-dashboard
+cd Internal-CRM-dashboard
 ```
 ### 2. Install dependencies
 npm install
