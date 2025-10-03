@@ -6,17 +6,15 @@ It allows the internal team to:
 - Log communications (emails, SMS).  
 - Add/edit/delete internal notes.  
 - Create team tasks and reminders.  
-- View quick insights & filters (e.g., “not contacted in 7 days”).  
 
 ---
 
-## 🚀 Features  
-- **Authentication**: Google Sign-In (restricted to team accounts).  
+## Features  
+- **Authentication**: Google Sign-In.  
 - **Application Progress**: Stage tracking (Exploring → Shortlisting → Applying → Submitted).  
 - **Communication Log**: Manual log, mock email triggers, SMS/email notes.  
 - **Internal Notes**: Add, edit, delete notes for each student.  
 - **Team Tasks / Reminders**: Assign, mark complete, delete tasks.  
-- **Insights & Filters**: Quick filters and summary stats on dashboard.  
 
 ---
 
@@ -28,7 +26,7 @@ It allows the internal team to:
 
 ---
 
-## ⚙️ Setup Instructions  
+## Setup Instructions  
 
 ### 1. Clone the repository  
 ```bash
@@ -57,11 +55,6 @@ Then open "http://localhost:3000" in the browser.
 
 ### 5. Demo/Loom video
 
-<div>
-    <a href="https://www.loom.com/share/3d20653a3ec04aa495cf7c3809309cce">
-      <p>Videos | Library | Loom - 2 October 2025 - Watch Video</p>
-    </a>
-    <a href="https://www.loom.com/share/3d20653a3ec04aa495cf7c3809309cce">
-      <img style="max-width:300px;" src="https://cdn.loom.com/sessions/thumbnails/3d20653a3ec04aa495cf7c3809309cce-53a6584b34fdce0f-full-play.gif">
-    </a>
-</div>
+## 📸 Demo / Loom Video
+
+[![Watch the demo](https://cdn.loom.com/sessions/thumbnails/3d20653a3ec04aa495cf7c3809309cce-53a6584b34fdce0f-full-play.gif)](https://www.loom.com/share/3d20653a3ec04aa495cf7c3809309cce)
