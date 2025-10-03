@@ -18,7 +18,7 @@ It allows the internal team to:
 
 ---
 
-## 🛠️ Tech Stack  
+## Tech Stack  
 - **Next.js 15 (App Router)**  
 - **React 18**  
 - **Firebase** (Auth + Firestore)  
