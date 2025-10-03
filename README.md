@@ -55,6 +55,4 @@ Then open "http://localhost:3000" in the browser.
 
 ### 5. Demo/Loom video
 
-## 📸 Demo / Loom Video
-
-[![Watch the demo](https://cdn.loom.com/sessions/thumbnails/3d20653a3ec04aa495cf7c3809309cce-53a6584b34fdce0f-full-play.gif)](https://www.loom.com/share/3d20653a3ec04aa495cf7c3809309cce)
+https://www.loom.com/share/3d20653a3ec04aa495cf7c3809309cce?sid=ae7fddf5-cbff-48b3-b56f-c0f572fcf4ec
