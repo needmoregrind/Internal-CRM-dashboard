@@ -32,7 +32,7 @@ It allows the internal team to:
 ```bash
 git clone https://github.com/needmoregrind/MVP-internal-CRM-dashboard.git
 cd MVP-internal-CRM-dashboard
-
+```
 ### 2. Install dependencies
 npm install
 
